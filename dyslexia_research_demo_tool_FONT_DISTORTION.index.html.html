@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dyslexia Transposed-Letter Research Demo Tool</title>
+  <style>
+    :root {
+      --bg: #f7f6f2;
+      --panel: #ffffff;
+      --ink: #1f2933;
+      --muted: #586575;
+      --accent: #2457a6;
+      --accent2: #0f766e;
+      --warning: #9a3412;
+      --border: #d7dce2;
+      --stimulus-font: Arial, Verdana, Tahoma, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Verdana, Tahoma, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.55;
+    }
+    header {
+      background: #102a43;
+      color: white;
+      padding: 1.3rem 1.5rem;
+    }
+    header h1 { margin: 0 0 .3rem; font-size: 1.45rem; }
+    header p { margin: 0; color: #d9e2ec; max-width: 1050px; }
+    main {
+      display: grid;
+      grid-template-columns: 390px 1fr;
+      gap: 1rem;
+      padding: 1rem;
+      max-width: 1500px;
+      margin: 0 auto;
+    }
+    section, .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, .05);
+    }
+    h2 { font-size: 1.05rem; margin: 0 0 .75rem; }
+    h3 { font-size: .96rem; margin: 1rem 0 .45rem; }
+    label { display: block; font-weight: 700; margin-top: .75rem; }
+    small, .hint { color: var(--muted); }
+    textarea, input, select {
+      width: 100%;
+      padding: .65rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font: inherit;
+      background: white;
+    }
+    textarea { min-height: 150px; resize: vertical; }
+    input[type="range"] { padding: 0; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: .65rem; }
+    .buttons { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
+    button {
+      border: 0;
+      background: var(--accent);
+      color: white;
+      padding: .65rem .9rem;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.secondary { background: var(--accent2); }
+    button.ghost { background: #e5e7eb; color: #111827; }
+    button.warn { background: var(--warning); }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    #stimulus {
+      min-height: 330px;
+      font-family: var(--stimulus-font);
+      font-size: 1.1rem;
+      line-height: 1.9;
+      letter-spacing: .03em;
+      padding: 1.2rem;
+      border-radius: 14px;
+      border: 1px dashed #b6c2cf;
+      background: #fffef8;
+      white-space: pre-wrap;
+      overflow: hidden;
+    }
+    #stimulus * { font-family: var(--stimulus-font); }
+    .font-preview {
+      margin-top: .35rem;
+      padding: .55rem;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      background: #f8fafc;
+      color: var(--muted);
+      font-size: .95rem;
+      font-family: var(--stimulus-font);
+    }
+    .word { display: inline-block; }
+    .distorted-word { display: inline-block; white-space: normal; }
+    .distorted-char { display: inline-block; position: relative; will-change: transform, filter; }
+    .jitter {
+      animation-name: jitter;
+      animation-iteration-count: infinite;
+      animation-timing-function: ease-in-out;
+    }
+    @keyframes jitter {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(var(--jx1), var(--jy1)) rotate(var(--jr1)); }
+      50% { transform: translate(var(--jx2), var(--jy2)) rotate(var(--jr2)); }
+      75% { transform: translate(var(--jx3), var(--jy3)) rotate(var(--jr3)); }
+      100% { transform: translate(0, 0) rotate(0deg); }
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: .65rem;
+      margin-top: .85rem;
+    }
+    .metric {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: .75rem;
+    }
+    .metric strong { display: block; font-size: 1.25rem; }
+    .assessment-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: .65rem;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+    th, td { border-bottom: 1px solid var(--border); padding: .5rem; text-align: left; vertical-align: top; }
+    th { background: #f1f5f9; }
+    .notice {
+      border-left: 5px solid #f59e0b;
+      background: #fffbeb;
+      padding: .75rem;
+      border-radius: 10px;
+      margin-bottom: .75rem;
+    }
+    .pill {
+      display: inline-block;
+      padding: .2rem .55rem;
+      border-radius: 999px;
+      background: #e0f2fe;
+      color: #075985;
+      font-size: .82rem;
+      font-weight: 700;
+    }
+    @media (max-width: 980px) {
+      main { grid-template-columns: 1fr; }
+      .metrics, .assessment-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Dyslexia Transposed-Letter Research/Demo Tool</h1>
+  <p>Workshop tool for demonstrating text disruption effects and capturing participant reading time, comprehension, confidence, perceived effort and NASA-TLX-style workload ratings.</p>
+</header>
+<main>
+  <aside>
+    <section>
+      <div class="notice"><strong>Important:</strong> This is not a diagnostic tool and does not claim to reproduce dyslexia accurately. It demonstrates selected barriers such as transposed letters, confusable letters, timing pressure, visual jitter, visual distortion/crowding and font presentation for discussion and inclusive design teaching.</div>
+      <h2>1. Study setup</h2>
+      <label for="participantId">Participant/session ID</label>
+      <input id="participantId" placeholder="e.g. P001 or Workshop-A-03">
+
+      <div class="row">
+        <div>
+          <label for="condition">Condition</label>
+          <select id="condition">
+            <option value="control">Control / original text</option>
+            <option value="transposed">Transposed letters</option>
+            <option value="confusable">Confusable letters</option>
+            <option value="combined" selected>Combined</option>
+            <option value="visual-jitter">Visual jitter only</option>
+            <option value="visual-distortion">Visual distortion / crowding</option>
+            <option value="combined-distortion">Combined + distortion</option>
+          </select>
+        </div>
+        <div>
+          <label for="profile">Demo profile</label>
+          <select id="profile">
+            <option value="mild">Mild</option>
+            <option value="moderate" selected>Moderate</option>
+            <option value="high">High</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+      </div>
+
+      <h3>1a. Font presentation</h3>
+      <label for="fontChoice">Stimulus font</label>
+      <select id="fontChoice">
+        <option value="Arial, Verdana, Tahoma, sans-serif" selected>Arial / Sans serif baseline</option>
+        <option value="Verdana, Arial, sans-serif">Verdana</option>
+        <option value="Tahoma, Arial, sans-serif">Tahoma</option>
+        <option value="Trebuchet MS, Arial, sans-serif">Trebuchet MS</option>
+        <option value="Century Gothic, Arial, sans-serif">Century Gothic</option>
+        <option value="Calibri, Arial, sans-serif">Calibri</option>
+        <option value="Comic Sans MS, Comic Sans, cursive">Comic Sans MS</option>
+        <option value="Georgia, Times New Roman, serif">Georgia / Serif</option>
+        <option value="Times New Roman, Times, serif">Times New Roman / Serif</option>
+        <option value="Courier New, Courier, monospace">Courier New / Monospace</option>
+      </select>
+      <div id="fontPreview" class="font-preview">Preview: The passenger needs to find the correct platform.</div>
+
+      <h3>2. Effect parameters</h3>
+      <label>Word modification probability: <span id="probLabel">35%</span></label>
+      <input id="probability" type="range" min="0" max="100" value="35">
+
+      <label>Confusable-letter probability: <span id="confLabel">15%</span></label>
+      <input id="confusionProbability" type="range" min="0" max="100" value="15">
+
+      <label>Visual jitter intensity: <span id="jitLabel">2</span></label>
+      <input id="jitter" type="range" min="0" max="8" value="2">
+
+      <label>Visual distortion intensity: <span id="distLabel">45%</span></label>
+      <input id="distortion" type="range" min="0" max="100" value="45">
+      <small>Applies progressive crowding, blur, skew, drift and ghosting across the text.</small>
+
+      <label>Auto-refresh letters every: <span id="refreshLabel">1400 ms</span></label>
+      <input id="refresh" type="range" min="500" max="5000" step="100" value="1400">
+
+      <label><input id="preserveEdges" type="checkbox" checked> Preserve first and last letter</label>
+      <label><input id="logKeystrokes" type="checkbox"> Log answer edit count</label>
+
+      <h3>3. Text stimulus</h3>
+      <textarea id="sourceText">The passenger needs to find the correct platform, interpret a last-minute service change, and decide whether the displayed route still matches their planned journey. The information appears simple, but the task becomes harder when letters move, words change, or time pressure increases.</textarea>
+      <label for="question">Comprehension question</label>
+      <input id="question" value="What three tasks does the passenger need to complete?">
+      <label for="correctAnswer">Expected answer / scoring notes</label>
+      <input id="correctAnswer" value="Find platform; interpret service change; check route matches planned journey.">
+
+      <div class="buttons">
+        <button onclick="applyProfile()">Apply profile</button>
+        <button class="secondary" onclick="startTrial()">Start trial</button>
+        <button class="warn" onclick="finishTrial()">Finish trial</button>
+        <button class="ghost" onclick="resetTrial()">Reset</button>
+      </div>
+    </section>
+  </aside>
+
+  <section>
+    <h2>Participant view <span id="status" class="pill">Not started</span></h2>
+    <div id="stimulus" aria-live="polite">Press “Start trial” to begin.</div>
+
+    <div class="metrics">
+      <div class="metric"><span>Elapsed time</span><strong id="elapsed">0.0s</strong></div>
+      <div class="metric"><span>Words</span><strong id="wordCount">0</strong></div>
+      <div class="metric"><span>Words/min</span><strong id="wpm">0</strong></div>
+      <div class="metric"><span>Modified items</span><strong id="modifiedCount">0</strong></div>
+    </div>
+
+    <h3>Participant answer</h3>
+    <p id="questionDisplay" class="hint"></p>
+    <textarea id="answer" placeholder="Participant types answer here..."></textarea>
+
+    <h3>Post-task ratings</h3>
+    <div class="assessment-grid">
+      <label>Comprehension confidence (0–10)<input id="confidence" type="number" min="0" max="10" value="5"></label>
+      <label>Perceived difficulty (0–10)<input id="difficulty" type="number" min="0" max="10" value="5"></label>
+      <label>Number of answer errors<input id="errors" type="number" min="0" value="0"></label>
+      <label>Mental demand (0–20)<input id="mental" type="number" min="0" max="20" value="10"></label>
+      <label>Temporal demand (0–20)<input id="temporal" type="number" min="0" max="20" value="10"></label>
+      <label>Frustration (0–20)<input id="frustration" type="number" min="0" max="20" value="10"></label>
+    </div>
+
+    <div class="buttons">
+      <button onclick="saveRecord()">Save record</button>
+      <button class="secondary" onclick="downloadCSV()">Download CSV</button>
+      <button class="ghost" onclick="copySummary()">Copy summary</button>
+      <button class="ghost" onclick="clearRecords()">Clear records</button>
+    </div>
+
+    <h3>Saved records</h3>
+    <table id="recordsTable">
+      <thead>
+        <tr><th>Session</th><th>Condition</th><th>Profile</th><th>Font</th><th>Time</th><th>WPM</th><th>Modified</th><th>Difficulty</th><th>Confidence</th><th>NASA-lite</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+</main>
+
+<script>
+const confusionMap = { b:'d', d:'b', p:'q', q:'p', n:'u', u:'n', m:'rn' };
+let timer = null;
+let refreshTimer = null;
+let startTime = null;
+let elapsedSeconds = 0;
+let currentModified = 0;
+let editCount = 0;
+let records = JSON.parse(localStorage.getItem('dyslexiaDemoRecords') || '[]');
+let originalTextCache = '';
+
+const $ = id => document.getElementById(id);
+
+function applyFontChoice(){
+  const font = $('fontChoice').value;
+  document.documentElement.style.setProperty('--stimulus-font', font);
+  $('stimulus').style.fontFamily = font;
+  $('fontPreview').style.fontFamily = font;
+}
+
+function updateLabels(){
+  $('probLabel').textContent = $('probability').value + '%';
+  $('confLabel').textContent = $('confusionProbability').value + '%';
+  $('jitLabel').textContent = $('jitter').value;
+  $('distLabel').textContent = $('distortion').value + '%';
+  $('refreshLabel').textContent = $('refresh').value + ' ms';
+}
+['probability','confusionProbability','jitter','distortion','refresh'].forEach(id => $(id).addEventListener('input', updateLabels));
+$('profile').addEventListener('change', () => { if ($('profile').value !== 'custom') applyProfile(); });
+$('fontChoice').addEventListener('change', () => { applyFontChoice(); renderStimulus(); });
+$('answer').addEventListener('input', () => { if ($('logKeystrokes').checked) editCount++; });
+
+function applyProfile(){
+  const p = $('profile').value;
+  if (p === 'mild') setVals(18, 6, 1, 25, 2200);
+  if (p === 'moderate') setVals(35, 15, 2, 45, 1400);
+  if (p === 'high') setVals(58, 28, 5, 75, 850);
+  updateLabels();
+}
+function setVals(prob, conf, jit, dist, refresh){
+  $('probability').value = prob;
+  $('confusionProbability').value = conf;
+  $('jitter').value = jit;
+  $('distortion').value = dist;
+  $('refresh').value = refresh;
+}
+function tokenise(text){ return text.match(/\S+|\s+/g) || []; }
+function stripPunctuation(word){
+  const match = word.match(/^(\W*)([A-Za-zÀ-ſ'-]+)(\W*)$/);
+  return match ? {pre: match[1], core: match[2], post: match[3]} : {pre:'', core:word, post:''};
+}
+function shuffleInternal(word){
+  if (word.length <= 3) return word;
+  const preserve = $('preserveEdges').checked;
+  let chars = word.split('');
+  let start = preserve ? 1 : 0;
+  let end = preserve ? chars.length - 2 : chars.length - 1;
+  if (end <= start) return word;
+  const i = start + Math.floor(Math.random() * (end - start + 1));
+  let j = start + Math.floor(Math.random() * (end - start + 1));
+  if (i === j) j = Math.min(end, i + 1);
+  [chars[i], chars[j]] = [chars[j], chars[i]];
+  return chars.join('');
+}
+function confuseLetters(word, probability){
+  return word.split('').map(ch => {
+    const lower = ch.toLowerCase();
+    if (confusionMap[lower] && Math.random() < probability) {
+      const repl = confusionMap[lower];
+      return ch === lower ? repl : repl.toUpperCase();
+    }
+    return ch;
+  }).join('');
+}
+function transformText(text){
+  const condition = $('condition').value;
+  const wordProb = Number($('probability').value) / 100;
+  const confProb = Number($('confusionProbability').value) / 100;
+  currentModified = 0;
+
+  return tokenise(text).map(tok => {
+    if (/^\s+$/.test(tok)) return tok;
+    const parts = stripPunctuation(tok);
+    let core = parts.core;
+    let before = core;
+    if (condition === 'transposed' || condition === 'combined' || condition === 'combined-distortion') {
+      if (Math.random() < wordProb) core = shuffleInternal(core);
+    }
+    if (condition === 'confusable' || condition === 'combined' || condition === 'combined-distortion') core = confuseLetters(core, confProb);
+    if (core !== before) currentModified++;
+    return parts.pre + core + parts.post;
+  }).join('');
+}
+function renderDistortedText(text){
+  const intensity = Number($('distortion').value) / 100;
+  const tokens = tokenise(text);
+  const wordsOnly = tokens.filter(t => !/^\s+$/.test(t));
+  let wordIndex = 0;
+  currentModified = Math.max(currentModified, Math.round(wordsOnly.length * intensity));
+
+  return tokens.map(tok => {
+    if (/^\s+$/.test(tok)) return tok;
+    const progress = wordsOnly.length <= 1 ? 0 : wordIndex / (wordsOnly.length - 1);
+    wordIndex++;
+    const local = Math.min(1, intensity * (0.55 + progress * 1.15));
+    const letterSpacing = (-0.13 * local).toFixed(3) + 'em';
+    const wordSpacing = (-0.20 * local).toFixed(3) + 'em';
+    const blur = (1.55 * local).toFixed(2) + 'px';
+    const opacity = (1 - 0.08 * local).toFixed(2);
+    const weight = Math.round(400 + 350 * local);
+    const ghost1 = (2.0 * local).toFixed(2);
+    const ghost2 = (-1.6 * local).toFixed(2);
+
+    const chars = escapeHtml(tok).split('').map(ch => {
+      const y = rand(-6.5 * local, 6.5 * local);
+      const x = rand(-2.0 * local, 2.0 * local);
+      const skew = rand(-12 * local, 12 * local);
+      const scaleY = rand(1 - 0.08 * local, 1 + 0.10 * local);
+      const cBlur = rand(0, 0.45 * local);
+      const shadow = `${ghost1}px 0 rgba(0,0,0,${(0.18*local).toFixed(2)}), ${ghost2}px ${rand(-0.8*local,0.8*local)}px rgba(0,0,0,${(0.13*local).toFixed(2)})`;
+      return `<span class="distorted-char" style="transform:translate(${x}px,${y}px) skew(${skew}deg) scaleY(${scaleY});filter:blur(${cBlur}px);text-shadow:${shadow};">${ch}</span>`;
+    }).join('');
+
+    return `<span class="distorted-word" style="letter-spacing:${letterSpacing};word-spacing:${wordSpacing};filter:blur(${blur});opacity:${opacity};font-weight:${weight};">${chars}</span>`;
+  }).join('');
+}
+function renderStimulus(){
+  applyFontChoice();
+  const condition = $('condition').value;
+  let text = (condition === 'control' || condition === 'visual-distortion') ? originalTextCache : transformText(originalTextCache);
+  if (condition === 'visual-distortion' || condition === 'combined-distortion') {
+    const html = renderDistortedText(text);
+    $('stimulus').innerHTML = html;
+    $('modifiedCount').textContent = currentModified;
+    return;
+  }
+  const jitterValue = Number($('jitter').value);
+  const applyJitter = condition === 'visual-jitter' || condition === 'combined';
+  const html = tokenise(text).map(tok => {
+    if (/^\s+$/.test(tok)) return tok;
+    if (!applyJitter || jitterValue === 0) return escapeHtml(tok);
+    const dur = (0.65 + Math.random() * 1.3).toFixed(2) + 's';
+    const delay = (-Math.random() * 1.1).toFixed(2) + 's';
+    const amp = jitterValue;
+    const style = `--jx1:${rand(-amp, amp)}px;--jy1:${rand(-amp, amp)}px;--jx2:${rand(-amp, amp)}px;--jy2:${rand(-amp, amp)}px;--jx3:${rand(-amp, amp)}px;--jy3:${rand(-amp, amp)}px;--jr1:${rand(-2,2)}deg;--jr2:${rand(-2,2)}deg;--jr3:${rand(-2,2)}deg;animation-duration:${dur};animation-delay:${delay};`;
+    return `<span class="word jitter" style="${style}">${escapeHtml(tok)}</span>`;
+  }).join('');
+  $('stimulus').innerHTML = html;
+  $('modifiedCount').textContent = currentModified;
+}
+function rand(min, max){ return (min + Math.random() * (max-min)).toFixed(2); }
+function escapeHtml(str){ return str.replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+function startTrial(){
+  resetTimersOnly();
+  originalTextCache = $('sourceText').value.trim();
+  if (!originalTextCache) return alert('Please add stimulus text.');
+  $('status').textContent = 'Running';
+  $('questionDisplay').textContent = $('question').value;
+  $('answer').value = '';
+  editCount = 0;
+  startTime = performance.now();
+  renderStimulus();
+  const wordCount = (originalTextCache.match(/\b\w+\b/g) || []).length;
+  $('wordCount').textContent = wordCount;
+  timer = setInterval(updateTimer, 100);
+  refreshTimer = setInterval(renderStimulus, Number($('refresh').value));
+}
+function updateTimer(){
+  elapsedSeconds = (performance.now() - startTime) / 1000;
+  $('elapsed').textContent = elapsedSeconds.toFixed(1) + 's';
+  const words = Number($('wordCount').textContent || 0);
+  $('wpm').textContent = elapsedSeconds > 0 ? Math.round(words / (elapsedSeconds / 60)) : 0;
+}
+function finishTrial(){
+  resetTimersOnly();
+  $('status').textContent = 'Finished';
+  updateTimerSafe();
+}
+function updateTimerSafe(){ if (startTime) updateTimer(); }
+function resetTimersOnly(){ if (timer) clearInterval(timer); if (refreshTimer) clearInterval(refreshTimer); timer = null; refreshTimer = null; }
+function resetTrial(){
+  resetTimersOnly(); startTime = null; elapsedSeconds = 0; currentModified = 0; editCount = 0;
+  $('status').textContent = 'Not started'; $('elapsed').textContent = '0.0s'; $('wpm').textContent = '0'; $('wordCount').textContent = '0'; $('modifiedCount').textContent = '0';
+  $('stimulus').textContent = 'Press “Start trial” to begin.'; $('answer').value = ''; $('questionDisplay').textContent = '';
+}
+function nasaLite(){
+  return Math.round((Number($('mental').value) + Number($('temporal').value) + Number($('frustration').value)) / 3 * 10) / 10;
+}
+function saveRecord(){
+  const rec = {
+    timestamp: new Date().toISOString(),
+    participantId: $('participantId').value || 'anonymous',
+    condition: $('condition').value,
+    profile: $('profile').value,
+    fontChoice: $('fontChoice').options[$('fontChoice').selectedIndex].text,
+    probability: $('probability').value,
+    confusionProbability: $('confusionProbability').value,
+    jitter: $('jitter').value,
+    distortion: $('distortion').value,
+    refresh: $('refresh').value,
+    elapsedSeconds: Number(elapsedSeconds.toFixed(2)),
+    wordCount: Number($('wordCount').textContent),
+    wpm: Number($('wpm').textContent),
+    modifiedCount: Number($('modifiedCount').textContent),
+    question: $('question').value,
+    expectedAnswer: $('correctAnswer').value,
+    participantAnswer: $('answer').value,
+    errors: Number($('errors').value),
+    confidence: Number($('confidence').value),
+    difficulty: Number($('difficulty').value),
+    mentalDemand: Number($('mental').value),
+    temporalDemand: Number($('temporal').value),
+    frustration: Number($('frustration').value),
+    nasaLite: nasaLite(),
+    editCount
+  };
+  records.push(rec); localStorage.setItem('dyslexiaDemoRecords', JSON.stringify(records)); renderRecords();
+}
+function renderRecords(){
+  const tbody = $('recordsTable').querySelector('tbody');
+  tbody.innerHTML = records.map(r => `<tr><td>${escapeHtml(r.participantId || 'anonymous')}</td><td>${escapeHtml(r.condition || '')}</td><td>${escapeHtml(r.profile || '')}</td><td>${escapeHtml(r.fontChoice || 'n/a')}</td><td>${r.elapsedSeconds || 0}s</td><td>${r.wpm || 0}</td><td>${r.modifiedCount || 0}</td><td>${r.difficulty ?? ''}</td><td>${r.confidence ?? ''}</td><td>${r.nasaLite ?? ''}</td></tr>`).join('');
+}
+function downloadCSV(){
+  if (!records.length) return alert('No records saved yet.');
+  const cols = Object.keys(records[0]);
+  const csv = [cols.join(','), ...records.map(r => cols.map(c => csvCell(r[c])).join(','))].join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'dyslexia_demo_metrics.csv'; a.click(); URL.revokeObjectURL(url);
+}
+function csvCell(value){
+  const s = String(value ?? '');
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function copySummary(){
+  const summary = `Dyslexia demo summary\nRecords: ${records.length}\nLatest condition: ${records.at(-1)?.condition || 'n/a'}\nLatest font: ${records.at(-1)?.fontChoice || 'n/a'}\nLatest WPM: ${records.at(-1)?.wpm || 'n/a'}\nLatest NASA-lite: ${records.at(-1)?.nasaLite || 'n/a'}`;
+  navigator.clipboard.writeText(summary).then(() => alert('Summary copied.'));
+}
+function clearRecords(){ if (confirm('Clear all saved records in this browser?')) { records = []; localStorage.removeItem('dyslexiaDemoRecords'); renderRecords(); } }
+
+applyProfile(); updateLabels(); applyFontChoice(); renderRecords();
+</script>
+</body>
+</html>
